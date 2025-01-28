@@ -128,4 +128,57 @@ describe("LiquidityPool Contract Tests", () => {
       liquidityPool.write.withdrawUSDC([1000n * 10n ** 6n], { account: owner.account })
     ).to.be.rejectedWith('USDC');
   });
+
+  it('owner should be able to change exchange rate', async () => {
+    const { usdc, liquidityPool } = await loadFixture(deployLiquidityPool);
+    const [owner] = await hre.viem.getWalletClients();
+
+    // Change exchange rate
+    await liquidityPool.write.setExchangeRate([3n], { account: owner.account });
+
+    // Check exchange rate
+    expect(await liquidityPool.read.exchangeRate()).to.equal(3n);
+  });
+
+
+  it('should revert changing exchange rate if not owner', async () => {
+    const { liquidityPool } = await loadFixture(deployLiquidityPool);
+    const [owner, user] = await hre.viem.getWalletClients();
+
+    // Change exchange rate
+    await expect(
+      liquidityPool.write.setExchangeRate([3n], { account: user.account })
+    ).to.be.rejected;
+  });
+
+  it('should be able to check if it has MINTER_ROLE and OWNER_ROLE', async () => {
+    const { bltm, liquidityPool } = await loadFixture(deployLiquidityPool);
+    const [owner] = await hre.viem.getWalletClients();
+
+    // Check if owner has MINTER_ROLE
+    const minterRole = await bltm.read.MINTER_ROLE();
+    const hasRole = await bltm.read.hasRole([minterRole, owner.account.address]);
+    expect(hasRole).to.be.true;
+
+    // Check if owner has OWNER_ROLE
+    const ownerRole = await liquidityPool.read.OWNER_ROLE();
+    const hasOwnerRole = await liquidityPool.read.hasRole([ownerRole, owner.account.address]);
+    expect(hasOwnerRole).to.be.true;
+  });
+
+  it("should be able to check it doesn't have MINTER_ROLE and OWNER_ROLE", async () => {
+    const { bltm, liquidityPool } = await loadFixture(deployLiquidityPool);
+    const [owner, user] = await hre.viem.getWalletClients();
+
+    // Check if user has MINTER_ROLE
+    const minterRole = await bltm.read.MINTER_ROLE();
+    const hasRole = await bltm.read.hasRole([minterRole, user.account.address]);
+    expect(hasRole).to.be.false;
+
+    // Check if user has OWNER_ROLE
+    const ownerRole = await liquidityPool.read.OWNER_ROLE();
+    const hasOwnerRole = await liquidityPool.read.hasRole([ownerRole, user.account.address]);
+    expect(hasOwnerRole).to.be.false;
+  });
+
 });
