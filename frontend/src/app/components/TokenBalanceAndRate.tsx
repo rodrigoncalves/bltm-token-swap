@@ -1,14 +1,7 @@
-import { useState } from 'react';
-import { useAccount } from 'wagmi';
+import { useBalanceAndRate } from '../hooks/useBalanceAndRate';
 
 export default function TokenBalanceAndRate() {
-  const { address } = useAccount();
-
-  const [usdcBalance, setUsdcBalance] = useState<string>('0');
-  const [exchangeRate, setExchangeRate] = useState<string>('0');
-  const [bltmBalance, setBltmBalance] = useState<string>('0');
-
-  const fetchExchangeRate = async () => {};
+  const { exchangeRate, usdcBalance, bltmBalance } = useBalanceAndRate();
 
   return (
     <div className="flex flex-col gap-4">
