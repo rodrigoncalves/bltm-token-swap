@@ -2,16 +2,24 @@
 import { useAccount } from 'wagmi';
 import WalletConnect from './components/WalletConnect';
 import TokenBalanceAndRate from './components/TokenBalanceAndRate';
+import TokenSwap from './components/TokenSwap';
 
 export default function Home() {
   const { isConnected } = useAccount();
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+    <div className="items-center justify-items-center min-h-screen font-[family-name:var(--font-geist-sans)]">
+      <header>
+        <h1 className="mt-10 text-[32px] font-bold mb-4">BLTM Token Swap</h1>
+      </header>
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <h1 className="text-xl font-bold mb-4">BLTM Token Swap</h1>
         <WalletConnect />
-        {isConnected && <TokenBalanceAndRate />}
+        {isConnected && (
+          <>
+            <TokenBalanceAndRate />
+            <TokenSwap />
+          </>
+        )}
       </main>
     </div>
   );
