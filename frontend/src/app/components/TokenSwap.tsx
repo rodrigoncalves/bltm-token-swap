@@ -1,19 +1,34 @@
 import { useState } from 'react';
 import { parseUnits } from 'viem';
-import { useLiquidityPool } from '../hooks/useLiquidityPool';
+import { useDeposit } from '../hooks/useLiquidityPool';
+import { useRedeem } from '../hooks/useRedeem';
 import { useTokenBalance } from '../hooks/useTokenBalance';
 
 export default function TokenSwap() {
-  const { usdcBalance, usdcDecimals, bltmBalance, refetchBalances } = useTokenBalance();
-  const { allowance, isApproving, isDepositing, onApproveDeposit, onDeposit } = useLiquidityPool();
+  const { usdcBalance, usdcDecimals, bltmBalance, bltmDecimals, refetchBalances } = useTokenBalance();
+  const {
+    allowance: depositAllowance,
+    isApproving: isApprovingDeposit,
+    isDepositing,
+    onApproveDeposit,
+    onDeposit
+  } = useDeposit();
+  const {
+    allowance: redeemAllowance,
+    isApproving: isApprovingRedeem,
+    isRedeeming,
+    onApproveRedeem,
+    onRedeem
+  } = useRedeem();
   const [amount, setAmount] = useState<string>('');
 
-  const hasAllowance = Number(allowance) >= Number(amount);
+  const hasDepositAllowance = Number(depositAllowance) >= Number(amount);
+  const hasRedeemAllowance = Number(redeemAllowance) >= Number(amount);
 
   const handleDeposit = async () => {
     try {
       const value = parseUnits(amount, usdcDecimals);
-      if (hasAllowance) {
+      if (hasDepositAllowance) {
         await onDeposit(value);
         setAmount('');
         refetchBalances?.();
@@ -28,18 +43,34 @@ export default function TokenSwap() {
     }
   };
 
-  const handleWithdraw = () => {};
+  const handleRedeem = async () => {
+    try {
+      if (hasRedeemAllowance) {
+        await onRedeem(parseUnits(amount, bltmDecimals));
+        setAmount('');
+        refetchBalances?.();
+      } else {
+        await onApproveRedeem(parseUnits(amount, bltmDecimals));
+      }
+    } catch (err) {
+      const errorParsed = (err as Error).toString();
+      if (!errorParsed.includes('User rejected the request')) {
+        console.error(err);
+      }
+    }
+  };
 
   const invalidAmount = isNaN(Number(amount)) || Number(amount) <= 0;
   const max = Math.max(Number(usdcBalance), Number(bltmBalance));
-  const isButtonsDisabled = isApproving || invalidAmount;
+  const isButtonsDisabled = isApprovingDeposit || isApprovingRedeem || invalidAmount;
   const isDepositDisabled = isButtonsDisabled || Number(amount) > Number(usdcBalance);
-  const isWithdrawDisabled = isButtonsDisabled || Number(amount) > Number(bltmBalance);
+  const isRendeemDisabled = isButtonsDisabled || Number(amount) > Number(bltmBalance);
 
   return (
     <div className="text-lg font-bold">
       <h3>Swap</h3>
-      <p className="text-sm">Allowance: {allowance}</p>
+      <p className="text-sm">USDC Allowance: {depositAllowance}</p>
+      <p className="text-sm">BLTM Allowance: {redeemAllowance}</p>
       <input
         type="number"
         placeholder="Enter amount"
@@ -49,10 +80,11 @@ export default function TokenSwap() {
         style={{ color: 'black' }}
         min={0}
         max={max}
-        disabled={isApproving}
+        disabled={isApprovingDeposit || isApprovingRedeem}
       />
-      {isApproving && <p className="text-sm">Approving...</p>}
+      {(isApprovingDeposit || isApprovingRedeem) && <p className="text-sm">Approving...</p>}
       {isDepositing && <p className="text-sm">Depositing...</p>}
+      {isRedeeming && <p className="text-sm">Rendeeming...</p>}
       {Number(amount) > Number(usdcBalance) && <p className="text-sm text-red-500">Insufficient balance</p>}
       <div className="flex justify-between mt-2">
         <button
@@ -62,17 +94,16 @@ export default function TokenSwap() {
           }
           disabled={isDepositDisabled}
         >
-          {hasAllowance ? 'Swap USDC to BLTM' : 'Approve USDC Deposit'}
+          {hasDepositAllowance ? 'Swap USDC to BLTM' : 'Approve USDC Deposit'}
         </button>
         <button
-          onClick={handleWithdraw}
+          onClick={handleRedeem}
           className={
-            'ml-2 px-4 py-2 bg-red-500 text-white rounded' +
-            (isWithdrawDisabled ? ' opacity-50 cursor-not-allowed' : '')
+            'ml-2 px-4 py-2 bg-red-500 text-white rounded' + (isRendeemDisabled ? ' opacity-50 cursor-not-allowed' : '')
           }
-          disabled={isWithdrawDisabled}
+          disabled={isRendeemDisabled}
         >
-          Swap BLTM to USDC
+          {hasRedeemAllowance ? 'Swap BLTM to USDC' : 'Approve BLTM Redeem'}
         </button>
       </div>
     </div>

@@ -4,7 +4,7 @@ import { LIQUIDITY_POOL_ADDRESS, USDC_ADDRESS } from '@/constants';
 import { formatUnits } from 'viem';
 import { useAccount, useReadContract, useWriteContract } from 'wagmi';
 
-export const useLiquidityPool = () => {
+export const useDeposit = () => {
   const { address } = useAccount();
 
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
