@@ -4,22 +4,27 @@ import { useLiquidityPool } from '../hooks/useLiquidityPool';
 import { useTokenBalance } from '../hooks/useTokenBalance';
 
 export default function TokenSwap() {
-  const { usdcBalance, usdcDecimals, bltmBalance } = useTokenBalance();
-  const { allowance, isApproving, onApproveDeposit, onDeposit } = useLiquidityPool();
+  const { usdcBalance, usdcDecimals, bltmBalance, refetchBalances } = useTokenBalance();
+  const { allowance, isApproving, isDepositing, onApproveDeposit, onDeposit } = useLiquidityPool();
   const [amount, setAmount] = useState<string>('');
 
   const hasAllowance = Number(allowance) >= Number(amount);
 
   const handleDeposit = async () => {
     try {
+      const value = parseUnits(amount, usdcDecimals);
       if (hasAllowance) {
-        await onDeposit(Number(amount));
+        await onDeposit(value);
         setAmount('');
+        refetchBalances?.();
       } else {
-        await onApproveDeposit(parseUnits(amount, usdcDecimals));
+        await onApproveDeposit(value);
       }
     } catch (err) {
-      console.error(err);
+      const errorParsed = (err as Error).toString();
+      if (!errorParsed.includes('User rejected the request')) {
+        console.error(err);
+      }
     }
   };
 
@@ -34,7 +39,7 @@ export default function TokenSwap() {
   return (
     <div className="text-lg font-bold">
       <h3>Swap</h3>
-      <p>Allowance: {allowance}</p>
+      <p className="text-sm">Allowance: {allowance}</p>
       <input
         type="number"
         placeholder="Enter amount"
@@ -47,6 +52,8 @@ export default function TokenSwap() {
         disabled={isApproving}
       />
       {isApproving && <p className="text-sm">Approving...</p>}
+      {isDepositing && <p className="text-sm">Depositing...</p>}
+      {Number(amount) > Number(usdcBalance) && <p className="text-sm text-red-500">Insufficient balance</p>}
       <div className="flex justify-between mt-2">
         <button
           onClick={handleDeposit}

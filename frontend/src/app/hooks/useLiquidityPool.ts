@@ -2,7 +2,7 @@ import { LiquidityPoolAbi } from '@/abis/LiquidityPoolAbi';
 import { USDCTokenAbi } from '@/abis/USDCTokenAbi';
 import { LIQUIDITY_POOL_ADDRESS, USDC_ADDRESS } from '@/constants';
 import { formatUnits } from 'viem';
-import { useAccount, useReadContract, useWalletClient, useWriteContract } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract } from 'wagmi';
 
 export const useLiquidityPool = () => {
   const { address } = useAccount();
@@ -14,10 +14,10 @@ export const useLiquidityPool = () => {
     args: [address, LIQUIDITY_POOL_ADDRESS]
   });
 
-  const { writeContractAsync: swapUSDCForBLTM } = useWriteContract();
+  const { writeContractAsync: swapUSDCForBLTM, isPending: isDepositing } = useWriteContract();
   const { writeContractAsync: approve, isPending: isApproving } = useWriteContract();
 
-  const onDeposit = (value: number) =>
+  const onDeposit = (value: bigint) =>
     swapUSDCForBLTM({
       abi: LiquidityPoolAbi,
       address: LIQUIDITY_POOL_ADDRESS,
@@ -33,10 +33,10 @@ export const useLiquidityPool = () => {
       args: [LIQUIDITY_POOL_ADDRESS, value]
     }, { onSuccess: () => refetchAllowance() });
 
-
   return {
     allowance: allowance ? formatUnits(allowance as bigint, 6) : 0n,
     isApproving,
+    isDepositing,
     onApproveDeposit,
     onDeposit,
   };

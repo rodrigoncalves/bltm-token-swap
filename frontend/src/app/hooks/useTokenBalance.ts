@@ -8,7 +8,7 @@ import { useAccount, useReadContracts } from 'wagmi';
 export const useTokenBalance = () => {
   const { address } = useAccount();
 
-  const { data, isLoading } = useReadContracts({
+  const { data, isLoading, refetch: refetchBalances } = useReadContracts({
     allowFailure: false,
     contracts: [
       {
@@ -49,5 +49,6 @@ export const useTokenBalance = () => {
     usdcBalance: formatUnits(usdcBalance, usdcDecimals),
     bltmDecimals,
     usdcDecimals,
+    refetchBalances
   };
 }
