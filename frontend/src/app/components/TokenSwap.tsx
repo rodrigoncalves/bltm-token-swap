@@ -62,7 +62,7 @@ export default function TokenSwap() {
           }
           disabled={isDepositDisabled}
         >
-          {hasAllowance ? 'Deposit USDC & Receive BLTM' : 'Approve USDC Deposit'}
+          {hasAllowance ? 'Swap USDC to BLTM' : 'Approve USDC Deposit'}
         </button>
         <button
           onClick={handleWithdraw}
@@ -72,7 +72,7 @@ export default function TokenSwap() {
           }
           disabled={isWithdrawDisabled}
         >
-          Withdraw BLTM & Receive USDC
+          Swap BLTM to USDC
         </button>
       </div>
     </div>
