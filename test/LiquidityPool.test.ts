@@ -38,6 +38,10 @@ describe("LiquidityPool Contract Tests", () => {
     // Mint USDC to user
     await usdc.write.mint([user.account.address, 1000n * 10n ** 6n], { account: owner.account });
 
+    // Check for allowance
+    const allowance = await usdc.read.allowance([user.account.address, liquidityPool.address]);
+    expect(allowance).to.equal(0n);
+
     // Approve USDC for LiquidityPool
     await usdc.write.approve([liquidityPool.address, 1000n * 10n ** 6n], { account: user.account });
 

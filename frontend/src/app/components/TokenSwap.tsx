@@ -1,22 +1,40 @@
 import { useState } from 'react';
-import { useBalanceAndRate } from '../hooks/useBalanceAndRate';
+import { parseUnits } from 'viem';
+import { useLiquidityPool } from '../hooks/useLiquidityPool';
+import { useTokenBalance } from '../hooks/useTokenBalance';
 
 export default function TokenSwap() {
-  const { usdcBalance, bltmBalance } = useBalanceAndRate();
+  const { usdcBalance, usdcDecimals, bltmBalance } = useTokenBalance();
+  const { allowance, isApproving, onApproveDeposit, onDeposit } = useLiquidityPool();
   const [amount, setAmount] = useState<string>('');
 
-  const handleDeposit = () => {};
+  const hasAllowance = Number(allowance) >= Number(amount);
+
+  const handleDeposit = async () => {
+    try {
+      if (hasAllowance) {
+        await onDeposit(Number(amount));
+        setAmount('');
+      } else {
+        await onApproveDeposit(parseUnits(amount, usdcDecimals));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleWithdraw = () => {};
 
   const invalidAmount = isNaN(Number(amount)) || Number(amount) <= 0;
   const max = Math.max(Number(usdcBalance), Number(bltmBalance));
-  const isDepositDisabled = invalidAmount || Number(amount) > Number(usdcBalance);
-  const isWithdrawDisabled = invalidAmount || Number(amount) > Number(bltmBalance);
+  const isButtonsDisabled = isApproving || invalidAmount;
+  const isDepositDisabled = isButtonsDisabled || Number(amount) > Number(usdcBalance);
+  const isWithdrawDisabled = isButtonsDisabled || Number(amount) > Number(bltmBalance);
 
   return (
     <div className="text-lg font-bold">
       <h3>Swap</h3>
+      <p>Allowance: {allowance}</p>
       <input
         type="number"
         placeholder="Enter amount"
@@ -26,7 +44,9 @@ export default function TokenSwap() {
         style={{ color: 'black' }}
         min={0}
         max={max}
+        disabled={isApproving}
       />
+      {isApproving && <p className="text-sm">Approving...</p>}
       <div className="flex justify-between mt-2">
         <button
           onClick={handleDeposit}
@@ -35,7 +55,7 @@ export default function TokenSwap() {
           }
           disabled={isDepositDisabled}
         >
-          Deposit USDC & Receive BLTM
+          {hasAllowance ? 'Deposit USDC & Receive BLTM' : 'Approve USDC Deposit'}
         </button>
         <button
           onClick={handleWithdraw}

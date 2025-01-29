@@ -5,7 +5,7 @@ import { BLTM_ADDRESS, LIQUIDITY_POOL_ADDRESS, USDC_ADDRESS } from '@/constants'
 import { formatUnits } from 'viem';
 import { useAccount, useReadContracts } from 'wagmi';
 
-export const useBalanceAndRate = () => {
+export const useTokenBalance = () => {
   const { address } = useAccount();
 
   const { data, isLoading } = useReadContracts({
@@ -33,13 +33,21 @@ export const useBalanceAndRate = () => {
   });
 
   if (isLoading || !data) {
-    return { exchangeRate: 0, usdcBalance: 0, bltmBalance: 0 };
+    return {
+      exchangeRate: 0,
+      bltmBalance: 0n,
+      usdcBalance: 0n,
+      bltmDecimals: 0,
+      usdcDecimals: 0,
+    };
   }
 
   const [exchangeRate, bltmBalance, bltmDecimals, usdcBalance, usdcDecimals] = data as [bigint, bigint, number, bigint, number];
   return {
     exchangeRate,
     bltmBalance: formatUnits(bltmBalance, bltmDecimals),
-    usdcBalance: formatUnits(usdcBalance, usdcDecimals)
+    usdcBalance: formatUnits(usdcBalance, usdcDecimals),
+    bltmDecimals,
+    usdcDecimals,
   };
 }

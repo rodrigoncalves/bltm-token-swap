@@ -1,7 +1,7 @@
-import { useBalanceAndRate } from '../hooks/useBalanceAndRate';
+import { useTokenBalance } from '../hooks/useTokenBalance';
 
 export default function TokenBalanceAndRate() {
-  const { exchangeRate, usdcBalance, bltmBalance } = useBalanceAndRate();
+  const { exchangeRate, usdcBalance, bltmBalance } = useTokenBalance();
 
   return (
     <div className="flex flex-col gap-4">
