@@ -51,6 +51,10 @@ describe("LiquidityPool Contract Tests", () => {
     // Check BLTM balance of user
     const bltmBalance = await bltm.read.balanceOf([user.account.address]);
     expect(bltmBalance).to.equal(1960n * 10n ** 6n); // After 2% royalty
+
+    // Check for emitted event
+    const events = await liquidityPool.getEvents.TokensSwapped();
+    expect(events.length).to.equal(1);
   });
 
   it("should allow redeeming BLTM for USDC", async () => {
@@ -74,6 +78,10 @@ describe("LiquidityPool Contract Tests", () => {
     expect(await usdc.read.balanceOf([user.account.address])).to.equal(980n * 10n ** 6n);
     expect(await bltm.read.balanceOf([user.account.address])).to.equal(0n);
     expect(await usdc.read.balanceOf([liquidityPool.address])).to.equal(20n * 10n ** 6n);
+
+    // Check for emitted event
+    const events = await liquidityPool.getEvents.TokensRedeemed();
+    expect(events.length).to.equal(1);
   });
 
   it('should withdraw USDC from LiquidityPool', async () => {

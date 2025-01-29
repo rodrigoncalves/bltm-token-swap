@@ -1,6 +1,6 @@
 import { LiquidityPoolAbi } from '@/abis/LiquidityPoolAbi';
 import { USDCTokenAbi } from '@/abis/USDCTokenAbi';
-import { LIQUIDITY_POOL_ADDRESS, USDC_ADDRESS } from '@/constants';
+import { DECIMAL_PLACES, LIQUIDITY_POOL_ADDRESS, USDC_ADDRESS } from '@/constants';
 import { formatUnits } from 'viem';
 import { useAccount, useReadContract, useWriteContract } from 'wagmi';
 
@@ -34,7 +34,7 @@ export const useDeposit = () => {
     }, { onSuccess: () => refetchAllowance() });
 
   return {
-    allowance: allowance ? formatUnits(allowance as bigint, 6) : 0n,
+    allowance: allowance ? formatUnits(allowance as bigint, DECIMAL_PLACES) : 0n,
     isApproving,
     isDepositing,
     isApprovingFailed: isApprovingFailed || false,

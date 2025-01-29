@@ -1,6 +1,7 @@
 import WalletConnect from './WalletConnect';
 import TokenBalanceAndRate from './TokenBalanceAndRate';
 import TokenSwap from './TokenSwap';
+import TransactionHistory from './TransactionHistory';
 import { useAccount } from 'wagmi';
 
 export default function Home() {
@@ -12,6 +13,7 @@ export default function Home() {
         <>
           <TokenBalanceAndRate />
           <TokenSwap />
+          <TransactionHistory />
         </>
       )}
     </>
