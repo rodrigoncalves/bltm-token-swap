@@ -58,9 +58,13 @@ contract LiquidityPool is AccessControl {
   function redeemBLTMForUSDC(uint256 _bltmAmount) external {
     require(_bltmAmount > 0, 'LiquidityPool: amount must be greater than 0');
 
-    uint256 usdcAmount = _bltmAmount / exchangeRate;
+    uint256 userBalance = bltmToken.balanceOf(msg.sender);
+    require(userBalance >= _bltmAmount, 'LiquidityPool: Insufficient BLTM balance');
 
-    require(bltmToken.transferFrom(msg.sender, address(this), _bltmAmount), 'LiquidityPool: BLTM transfer failed');
+    uint256 usdcAmount = _bltmAmount / exchangeRate;
+    require(usdcToken.balanceOf(address(this)) >= usdcAmount, 'LiquidityPool: Insufficient USDC in contract');
+
+    bltmToken.burnFrom(msg.sender, _bltmAmount);
     require(usdcToken.transfer(msg.sender, usdcAmount), 'LiquidityPool: USDC transfer failed');
 
     emit TokensRedeemed(msg.sender, _bltmAmount, usdcAmount);

@@ -57,19 +57,23 @@ describe("LiquidityPool Contract Tests", () => {
     const { usdc, bltm, liquidityPool } = await loadFixture(deployLiquidityPool);
     const [owner, user] = await hre.viem.getWalletClients();
 
-    // Mint USDC and BLTM
-    await usdc.write.mint([liquidityPool.address, 1000n * 10n ** 6n], { account: owner.account });
-    await bltm.write.mint([user.account.address, 1000n * 10n ** 6n], { account: owner.account });
+    // User has USDC
+    await usdc.write.mint([user.account.address, 1000n * 10n ** 6n], { account: owner.account });
+    expect(await usdc.read.balanceOf([user.account.address])).to.equal(1000n * 10n ** 6n);
 
-    // Approve BLTM for LiquidityPool
-    await bltm.write.approve([liquidityPool.address, 1000n * 10n ** 6n], { account: user.account });
+    // User deposit USDC to LiquidityPool
+    await usdc.write.approve([liquidityPool.address, 1000n * 10n ** 6n], { account: user.account });
+    await liquidityPool.write.swapUSDCForBLTM([1000n * 10n ** 6n], { account: user.account });
+    expect(await usdc.read.balanceOf([user.account.address])).to.equal(0n);
+    expect(await bltm.read.balanceOf([user.account.address])).to.equal(1960n * 10n ** 6n); // After 2% royalty
+    expect(await usdc.read.balanceOf([liquidityPool.address])).to.equal(1000n * 10n ** 6n);
 
-    // Redeem BLTM for USDC
-    await liquidityPool.write.redeemBLTMForUSDC([1000n * 10n ** 6n], { account: user.account });
-
-    // Check USDC balance of user
-    const usdcBalance = await usdc.read.balanceOf([user.account.address]);
-    expect(usdcBalance).to.equal(500n * 10n ** 6n);
+    // User redeem BLTM for USDC and LP get 2% royalty
+    await bltm.write.approve([liquidityPool.address, 1960n * 10n ** 6n], { account: user.account });
+    await liquidityPool.write.redeemBLTMForUSDC([1960n * 10n ** 6n], { account: user.account });
+    expect(await usdc.read.balanceOf([user.account.address])).to.equal(980n * 10n ** 6n);
+    expect(await bltm.read.balanceOf([user.account.address])).to.equal(0n);
+    expect(await usdc.read.balanceOf([liquidityPool.address])).to.equal(20n * 10n ** 6n);
   });
 
   it('should withdraw USDC from LiquidityPool', async () => {
