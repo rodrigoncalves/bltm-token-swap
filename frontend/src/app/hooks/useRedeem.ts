@@ -5,39 +5,39 @@ import { formatUnits } from 'viem';
 import { useAccount, useReadContract, useWriteContract } from 'wagmi';
 
 export const useRedeem = () => {
-    const { address } = useAccount();
+  const { address } = useAccount();
 
-    const { data: allowance, refetch: refetchAllowance } = useReadContract({
-        abi: BLTMTokenAbi,
-        address: BLTM_ADDRESS,
-        functionName: "allowance",
-        args: [address, LIQUIDITY_POOL_ADDRESS]
-    });
+  const { data: allowance, refetch: refetchAllowance } = useReadContract({
+    abi: BLTMTokenAbi,
+    address: BLTM_ADDRESS,
+    functionName: "allowance",
+    args: [address, LIQUIDITY_POOL_ADDRESS]
+  });
 
-    const { writeContractAsync: redeemBLTMForUSDC, isPending: isRedeeming } = useWriteContract();
-    const { writeContractAsync: approve, isPending: isApproving } = useWriteContract();
+  const { writeContractAsync: redeemBLTMForUSDC, isPending: isRedeeming } = useWriteContract();
+  const { writeContractAsync: approve, isPending: isApproving } = useWriteContract();
 
-    const onRedeem = (value: bigint) =>
-        redeemBLTMForUSDC({
-            abi: LiquidityPoolAbi,
-            address: LIQUIDITY_POOL_ADDRESS,
-            functionName: 'redeemBLTMForUSDC',
-            args: [value]
-        }, { onSuccess: () => refetchAllowance() });
+  const onRedeem = (value: bigint) =>
+    redeemBLTMForUSDC({
+      abi: LiquidityPoolAbi,
+      address: LIQUIDITY_POOL_ADDRESS,
+      functionName: 'redeemBLTMForUSDC',
+      args: [value]
+    }, { onSuccess: () => refetchAllowance() });
 
-    const onApproveRedeem = async (value: bigint) =>
-        approve({
-            abi: BLTMTokenAbi,
-            address: BLTM_ADDRESS,
-            functionName: 'approve',
-            args: [LIQUIDITY_POOL_ADDRESS, value]
-        }, { onSuccess: () => refetchAllowance() });
+  const onApproveRedeem = async (value: bigint) =>
+    approve({
+      abi: BLTMTokenAbi,
+      address: BLTM_ADDRESS,
+      functionName: 'approve',
+      args: [LIQUIDITY_POOL_ADDRESS, value]
+    }, { onSuccess: () => refetchAllowance() });
 
-    return {
-        allowance: allowance ? formatUnits(allowance as bigint, 6) : 0n,
-        isApproving,
-        isRedeeming,
-        onApproveRedeem,
-        onRedeem,
-    };
+  return {
+    allowance: allowance ? formatUnits(allowance as bigint, 6) : 0n,
+    isApproving,
+    isRedeeming,
+    onApproveRedeem,
+    onRedeem,
+  };
 };

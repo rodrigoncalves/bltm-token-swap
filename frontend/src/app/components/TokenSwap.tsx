@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { parseUnits } from 'viem';
-import { useDeposit } from '../hooks/useLiquidityPool';
+import { useDeposit } from '../hooks/useDeposit';
 import { useRedeem } from '../hooks/useRedeem';
 import { useTokenBalance } from '../hooks/useTokenBalance';
 
@@ -10,6 +10,7 @@ export default function TokenSwap() {
     allowance: depositAllowance,
     isApproving: isApprovingDeposit,
     isDepositing,
+    isApprovingFailed,
     onApproveDeposit,
     onDeposit
   } = useDeposit();
@@ -64,7 +65,7 @@ export default function TokenSwap() {
   const max = Math.max(Number(usdcBalance), Number(bltmBalance));
   const isButtonsDisabled = isApprovingDeposit || isApprovingRedeem || invalidAmount;
   const isDepositDisabled = isButtonsDisabled || Number(amount) > Number(usdcBalance);
-  const isRendeemDisabled = isButtonsDisabled || Number(amount) > Number(bltmBalance);
+  const isRedeemDisabled = isButtonsDisabled || Number(amount) > Number(bltmBalance);
 
   return (
     <div className="text-lg font-bold">
@@ -84,8 +85,9 @@ export default function TokenSwap() {
       />
       {(isApprovingDeposit || isApprovingRedeem) && <p className="text-sm">Approving...</p>}
       {isDepositing && <p className="text-sm">Depositing...</p>}
-      {isRedeeming && <p className="text-sm">Rendeeming...</p>}
+      {isRedeeming && <p className="text-sm">Redeeming...</p>}
       {Number(amount) > Number(usdcBalance) && <p className="text-sm text-red-500">Insufficient balance</p>}
+      {isApprovingFailed && <p className="text-sm text-red-500">Approving failed</p>}
       <div className="flex justify-between mt-2">
         <button
           onClick={handleDeposit}
@@ -99,9 +101,9 @@ export default function TokenSwap() {
         <button
           onClick={handleRedeem}
           className={
-            'ml-2 px-4 py-2 bg-red-500 text-white rounded' + (isRendeemDisabled ? ' opacity-50 cursor-not-allowed' : '')
+            'ml-2 px-4 py-2 bg-red-500 text-white rounded' + (isRedeemDisabled ? ' opacity-50 cursor-not-allowed' : '')
           }
-          disabled={isRendeemDisabled}
+          disabled={isRedeemDisabled}
         >
           {hasRedeemAllowance ? 'Swap BLTM to USDC' : 'Approve BLTM Redeem'}
         </button>
