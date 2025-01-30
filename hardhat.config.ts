@@ -1,6 +1,9 @@
-import type { HardhatUserConfig } from 'hardhat/config';
-import '@nomicfoundation/hardhat-toolbox-viem';
 import '@nomicfoundation/hardhat-chai-matchers';
+import '@nomicfoundation/hardhat-toolbox-viem';
+import 'dotenv/config';
+import type { HardhatUserConfig } from 'hardhat/config';
+
+const { SEPOLIA_API_URL, PRIVATE_KEY } = process.env;
 
 const config: HardhatUserConfig = {
   solidity: '0.8.28',
@@ -12,8 +15,9 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {},
-    localhost: {
-      url: 'http://127.0.0.1:8545'
+    sepolia: {
+      url: SEPOLIA_API_URL,
+      accounts: [PRIVATE_KEY as string]
     }
   }
 };
