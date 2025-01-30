@@ -251,6 +251,19 @@ export const LiquidityPoolAbi = [
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_usdcAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "deposit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "exchangeRate",
     "outputs": [
@@ -406,19 +419,6 @@ export const LiquidityPoolAbi = [
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_usdcAmount",
-        "type": "uint256"
-      }
-    ],
-    "name": "deposit",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "usdcToken",
     "outputs": [
@@ -444,4 +444,4 @@ export const LiquidityPoolAbi = [
     "stateMutability": "nonpayable",
     "type": "function"
   }
-]
+];
