@@ -58,7 +58,7 @@ cd frontend
 npm run dev
 ```
 
-#### 6️. (Optional) Connect MetaMask to the Localhost (Hardhat Network)
+#### 6. (Optional) Connect MetaMask to the Localhost (Hardhat Network)
 1. Open **Metamask** in your browser
 1. Click **Networks → Add Network → Custom RPC**
 1. Enter the following details:
@@ -79,7 +79,7 @@ npm run dev
 1. Click **Save**
 1. Import **USDC and BLTM** manually using deployed addresses (see below)
 
-#### 7. Rename .env.example to .env and fill in the required fields
+#### 8. Rename .env.template to .env and fill in the required fields
 
 ## Approach and Challenges
 
@@ -103,10 +103,10 @@ npm run dev
 ✅ Fix: Clean Metamask cache and restart the browser.
 
 ### 🔮 Suggested Improvements
-- Persist transactions in local storage or a database (e.g., Firebase, PostgreSQL).
+- Persist transactions in a database via a backend API to enhance security and ensure data persistence across devices (e.g., Firebase, PostgreSQL, MongoDB).
 - Expand to multiple chains (Polygon, Arbitrum) using Wagmi’s or Wallet Connect multi-chain support.
 - Improve UI with better styling and animations.
-- Add "owner only" features like change BLTM exchange rate and withdraw all remain USDCs from the pool.
+- Add "owner only" features like change BLTM exchange rate and withdraw USDCs fees from the pool.
 - Add unit tests on the frontend using Jest and React Testing Library.
 
 ## Deployed Contracts Addresses (Sepolia Network)
