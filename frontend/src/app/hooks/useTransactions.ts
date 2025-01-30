@@ -50,13 +50,13 @@ export function useTransactions() {
         })
       ]);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formatEvent = async (event: any, action: string) => {
         const args = event.args as TokenSwapEvent['args'];
         const amount = action === "Deposit" ? args.usdcAmount : args.bltmAmount;
         const block = await publicClient.getBlock(event.blockNumber);
         return {
           txHash: event.transactionHash,
+          timestamp: block.timestamp,
           date: new Date(Number(block.timestamp) * 1000).toLocaleString(),
           action,
           amount: formatUnits(amount, DECIMAL_PLACES),
@@ -111,6 +111,7 @@ export function useTransactions() {
             ...prev,
             {
               txHash,
+              timestamp: new Date().getTime(),
               date: new Date().toLocaleString(),
               action: 'Deposit',
               amount: formatUnits(event.args.usdcAmount, DECIMAL_PLACES),
@@ -138,6 +139,7 @@ export function useTransactions() {
             ...prev,
             {
               txHash,
+              timestamp: new Date().getTime(),
               date: new Date().toLocaleString(),
               action: 'Withdraw',
               amount: formatUnits(event.args.usdcAmount, DECIMAL_PLACES),
