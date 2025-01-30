@@ -9,6 +9,7 @@ export default function TransactionHistory() {
         <thead>
           <tr className="bg-gray-700 text-white">
             <th className="border border-gray-800 px-4 py-2">#</th>
+            <th className="border border-gray-800 px-4 py-2">Date</th>
             <th className="border border-gray-800 px-4 py-2">Action</th>
             <th className="border border-gray-800 px-4 py-2">Amount</th>
             <th className="border border-gray-800 px-4 py-2">User</th>
@@ -18,6 +19,7 @@ export default function TransactionHistory() {
           {transactions.map((tx, index) => (
             <tr key={index} className="border border-gray-800 text-center">
               <td className="px-4 py-2">{index + 1}</td>
+              <td className="px-4 py-2">{tx.date}</td>
               <td className="px-4 py-2">{tx.action}</td>
               <td className="px-4 py-2">{tx.amount}</td>
               <td className="px-4 py-2">

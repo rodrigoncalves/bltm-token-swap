@@ -6,6 +6,7 @@ import { usePublicClient, useWatchContractEvent } from "wagmi";
 
 interface Transaction {
   txHash: string;
+  date: string;
   action: string;
   amount: string;
   user: string;
@@ -27,40 +28,46 @@ export function useTransactions() {
   const [latestBlock, setLatestBlock] = useState<bigint>(0n);
   const processedLogs = useRef(new Set());
 
-  const tokensSwappedAbi = parseAbiItem('event TokensSwapped(address indexed user, uint256 usdcAmount, uint256 bltmAmount)');
-  const tokensRedeemedAbi = parseAbiItem('event TokensRedeemed(address indexed user, uint256 bltmAmount, uint256 usdcAmount)');
+  const tokensSwappedEventAbi = parseAbiItem('event TokensSwapped(address indexed user, uint256 usdcAmount, uint256 bltmAmount)');
+  const tokensRedeemedEventAbi = parseAbiItem('event TokensRedeemed(address indexed user, uint256 bltmAmount, uint256 usdcAmount)');
 
   const fetchTransactions = async () => {
     if (!publicClient) return;
 
     try {
-      const pastDeposits = await publicClient.getLogs({
-        address: LIQUIDITY_POOL_ADDRESS,
-        event: tokensSwappedAbi,
-        fromBlock: 0n,
-        toBlock: "latest",
-      });
+      const [pastDeposits, pastRedeems] = await Promise.all([
+        publicClient.getLogs({
+          address: LIQUIDITY_POOL_ADDRESS,
+          event: tokensSwappedEventAbi,
+          fromBlock: 0n,
+          toBlock: "latest",
+        }),
+        publicClient.getLogs({
+          address: LIQUIDITY_POOL_ADDRESS,
+          event: tokensRedeemedEventAbi,
+          fromBlock: 0n,
+          toBlock: "latest",
+        })
+      ]);
 
-      const formattedPastDeposits = (pastDeposits as never as TokenSwapEvent[]).map((event) => ({
-        txHash: event.transactionHash,
-        action: "Deposit",
-        amount: formatUnits(event.args.usdcAmount, DECIMAL_PLACES),
-        user: event.args.user,
-      }))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const formatEvent = async (event: any, action: string) => {
+        const args = event.args as TokenSwapEvent['args'];
+        const amount = action === "Deposit" ? args.usdcAmount : args.bltmAmount;
+        const block = await publicClient.getBlock(event.blockNumber);
+        return {
+          txHash: event.transactionHash,
+          date: new Date(Number(block.timestamp) * 1000).toLocaleString(),
+          action,
+          amount: formatUnits(amount, DECIMAL_PLACES),
+          user: args.user
+        }
+      }
 
-      const pastRedeems = await publicClient.getLogs({
-        address: LIQUIDITY_POOL_ADDRESS,
-        event: tokensRedeemedAbi,
-        fromBlock: 0n,
-        toBlock: "latest",
-      });
-
-      const formattedPastRedeems = (pastRedeems as never as TokenSwapEvent[]).map((event) => ({
-        txHash: event.transactionHash,
-        action: "Redeem",
-        amount: formatUnits(event.args.bltmAmount, DECIMAL_PLACES),
-        user: event.args.user,
-      }));
+      const [formattedPastDeposits, formattedPastRedeems] = await Promise.all([
+        Promise.all(pastDeposits.map(async (event) => await formatEvent(event, "Deposit"))),
+        Promise.all(pastRedeems.map(async (event) => await formatEvent(event, "Withdraw"))),
+      ]);
 
       const newTransactions = [...formattedPastDeposits, ...formattedPastRedeems];
       setTransactions(newTransactions);
@@ -83,7 +90,6 @@ export function useTransactions() {
   };
 
   useEffect(() => {
-    console.log('----------------')
     fetchTransactions();
     fetchLatestBlock();
   }, [publicClient]);
@@ -96,7 +102,6 @@ export function useTransactions() {
     eventName: 'TokensSwapped',
     fromBlock: latestBlock,
     onLogs(logs) {
-      console.log("🚀 ~ onLogs ~ TokensSwapped:", logs)
       logs.forEach((log) => {
         const event = (log as never as TokenSwapEvent);
         const txHash = event.transactionHash;
@@ -106,6 +111,7 @@ export function useTransactions() {
             ...prev,
             {
               txHash,
+              date: new Date().toLocaleString(),
               action: 'Deposit',
               amount: formatUnits(event.args.usdcAmount, DECIMAL_PLACES),
               user: event.args.owner,
@@ -123,7 +129,6 @@ export function useTransactions() {
     eventName: 'TokensRedeemed',
     fromBlock: latestBlock,
     onLogs(logs) {
-      console.log("🚀 ~ onLogs ~ TokensRedeemed:", logs)
       logs.forEach((log) => {
         const event = (log as never as TokenSwapEvent);
         const txHash = event.transactionHash;
@@ -133,6 +138,7 @@ export function useTransactions() {
             ...prev,
             {
               txHash,
+              date: new Date().toLocaleString(),
               action: 'Withdraw',
               amount: formatUnits(event.args.usdcAmount, DECIMAL_PLACES),
               user: event.args.owner,
