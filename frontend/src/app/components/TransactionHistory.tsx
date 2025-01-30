@@ -86,7 +86,7 @@ const TransactionHistory = () => {
                   Amount {sortField === 'amount' ? (sortOrder === 'asc' ? '🔼' : '🔽') : ''}
                 </th>
                 <th className="border border-gray-800 px-4 py-2 cursor-pointer" onClick={() => handleSort('user')}>
-                  User {sortField === 'user' ? (sortOrder === 'asc' ? '🔼' : '🔽') : ''}
+                  User address {sortField === 'user' ? (sortOrder === 'asc' ? '🔼' : '🔽') : ''}
                 </th>
               </tr>
             </thead>
