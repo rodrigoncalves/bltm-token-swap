@@ -46,7 +46,7 @@ describe("LiquidityPool Contract Tests", () => {
     await usdc.write.approve([liquidityPool.address, 1000n * 10n ** 6n], { account: user.account });
 
     // Swap USDC for BLTM
-    await liquidityPool.write.swapUSDCForBLTM([1000n * 10n ** 6n], { account: user.account });
+    await liquidityPool.write.deposit([1000n * 10n ** 6n], { account: user.account });
 
     // Check BLTM balance of user
     const bltmBalance = await bltm.read.balanceOf([user.account.address]);
@@ -67,14 +67,14 @@ describe("LiquidityPool Contract Tests", () => {
 
     // User deposit USDC to LiquidityPool
     await usdc.write.approve([liquidityPool.address, 1000n * 10n ** 6n], { account: user.account });
-    await liquidityPool.write.swapUSDCForBLTM([1000n * 10n ** 6n], { account: user.account });
+    await liquidityPool.write.deposit([1000n * 10n ** 6n], { account: user.account });
     expect(await usdc.read.balanceOf([user.account.address])).to.equal(0n);
     expect(await bltm.read.balanceOf([user.account.address])).to.equal(1960n * 10n ** 6n); // After 2% royalty
     expect(await usdc.read.balanceOf([liquidityPool.address])).to.equal(1000n * 10n ** 6n);
 
     // User redeem BLTM for USDC and LP get 2% royalty
     await bltm.write.approve([liquidityPool.address, 1960n * 10n ** 6n], { account: user.account });
-    await liquidityPool.write.redeemBLTMForUSDC([1960n * 10n ** 6n], { account: user.account });
+    await liquidityPool.write.redeem([1960n * 10n ** 6n], { account: user.account });
     expect(await usdc.read.balanceOf([user.account.address])).to.equal(980n * 10n ** 6n);
     expect(await bltm.read.balanceOf([user.account.address])).to.equal(0n);
     expect(await usdc.read.balanceOf([liquidityPool.address])).to.equal(20n * 10n ** 6n);
@@ -92,7 +92,7 @@ describe("LiquidityPool Contract Tests", () => {
     await usdc.write.mint([liquidityPool.address, 1000n * 10n ** 6n], { account: owner.account });
 
     // Withdraw USDC from LiquidityPool
-    await liquidityPool.write.withdrawUSDC([1000n * 10n ** 6n], { account: owner.account });
+    await liquidityPool.write.withdrawAll([1000n * 10n ** 6n], { account: owner.account });
 
     // Check USDC balance of LiquidityPool
     const usdcBalance = await usdc.read.balanceOf([liquidityPool.address]);
@@ -103,17 +103,19 @@ describe("LiquidityPool Contract Tests", () => {
     const { usdc, bltm, liquidityPool } = await loadFixture(deployLiquidityPool);
     const [owner, user] = await hre.viem.getWalletClients();
 
-    // Mint USDC to user
-    await usdc.write.mint([user.account.address, 100n * 10n ** 6n], { account: owner.account });
+    // Mint 1 USDC to user
+    await usdc.write.mint([user.account.address, 1n * 10n ** 6n], { account: owner.account });
+    expect(await usdc.read.balanceOf([user.account.address])).to.equal(1n * 10n ** 6n);
 
-    // Approve USDC for LiquidityPool
+    // Approve 100 USDC for LiquidityPool
     await usdc.write.approve([liquidityPool.address, 100n * 10n ** 6n], { account: user.account });
+    expect(await usdc.read.allowance([user.account.address, liquidityPool.address])).to.equal(100n * 10n ** 6n);
 
-    // Swap USDC for BLTM
+    // Swap 100 USDC for BLTM
     await expect(
-      liquidityPool.write.swapUSDCForBLTM([1000n * 10n ** 6n], { account: user.account })
-    ).to.be.rejectedWith('USDC');
-  })
+      liquidityPool.write.deposit([100n * 10n ** 6n], { account: user.account })
+    ).to.be.rejectedWith('ERC20InsufficientBalance');
+  });
 
   it('should revert redeeming BLTM for USDC if not enough BLTM', async () => {
     const { usdc, bltm, liquidityPool } = await loadFixture(deployLiquidityPool);
@@ -128,8 +130,8 @@ describe("LiquidityPool Contract Tests", () => {
 
     // Redeem BLTM for USDC
     await expect(
-      liquidityPool.write.redeemBLTMForUSDC([1000n * 10n ** 6n], { account: user.account })
-    ).to.be.rejectedWith('BLTM');
+      liquidityPool.write.redeem([1000n * 10n ** 6n], { account: user.account })
+    ).to.be.rejectedWith('LiquidityPool: Insufficient BLTM balance');
   });
 
   it('should revert withdrawing USDC from LiquidityPool if not enough USDC', async () => {
@@ -141,8 +143,8 @@ describe("LiquidityPool Contract Tests", () => {
 
     // Withdraw USDC from LiquidityPool
     await expect(
-      liquidityPool.write.withdrawUSDC([1000n * 10n ** 6n], { account: owner.account })
-    ).to.be.rejectedWith('USDC');
+      liquidityPool.write.withdrawAll([1000n * 10n ** 6n], { account: owner.account })
+    ).to.be.rejectedWith('LiquidityPool: Insufficient USDC balance');
   });
 
   it('owner should be able to change exchange rate', async () => {
@@ -156,7 +158,6 @@ describe("LiquidityPool Contract Tests", () => {
     expect(await liquidityPool.read.exchangeRate()).to.equal(3n);
   });
 
-
   it('should revert changing exchange rate if not owner', async () => {
     const { liquidityPool } = await loadFixture(deployLiquidityPool);
     const [owner, user] = await hre.viem.getWalletClients();
@@ -164,7 +165,7 @@ describe("LiquidityPool Contract Tests", () => {
     // Change exchange rate
     await expect(
       liquidityPool.write.setExchangeRate([3n], { account: user.account })
-    ).to.be.rejected;
+    ).to.be.rejectedWith('AccessControlUnauthorizedAccount');
   });
 
   it('should be able to check if it has MINTER_ROLE and OWNER_ROLE', async () => {

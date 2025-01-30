@@ -14,14 +14,14 @@ export const useDeposit = () => {
     args: [address, LIQUIDITY_POOL_ADDRESS]
   });
 
-  const { writeContractAsync: swapUSDCForBLTM, isPending: isDepositing, isError: isApprovingFailed } = useWriteContract();
+  const { writeContractAsync: deposit, isPending: isDepositing, isError: isApprovingFailed } = useWriteContract();
   const { writeContractAsync: approve, isPending: isApproving } = useWriteContract();
 
   const onDeposit = (value: bigint) =>
-    swapUSDCForBLTM({
+    deposit({
       abi: LiquidityPoolAbi,
       address: LIQUIDITY_POOL_ADDRESS,
-      functionName: 'swapUSDCForBLTM',
+      functionName: 'deposit',
       args: [value]
     }, { onSuccess: () => refetchAllowance() });
 

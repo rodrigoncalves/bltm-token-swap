@@ -41,7 +41,7 @@ contract LiquidityPool is AccessControl {
   }
 
   // Swap USDC for BLTM
-  function swapUSDCForBLTM(uint256 _usdcAmount) external {
+  function deposit(uint256 _usdcAmount) external {
     require(_usdcAmount > 0, 'LiquidityPool: amount must be greater than 0');
 
     uint256 royalty = (_usdcAmount * ROYALTY_PERCENTAGE) / 100;
@@ -55,7 +55,7 @@ contract LiquidityPool is AccessControl {
   }
 
   // Swap BLTM for USDC
-  function redeemBLTMForUSDC(uint256 _bltmAmount) external {
+  function redeem(uint256 _bltmAmount) external {
     require(_bltmAmount > 0, 'LiquidityPool: amount must be greater than 0');
 
     uint256 userBalance = bltmToken.balanceOf(msg.sender);
@@ -70,7 +70,7 @@ contract LiquidityPool is AccessControl {
     emit TokensRedeemed(msg.sender, _bltmAmount, usdcAmount);
   }
 
-  function withdrawUSDC(uint256 _amount) external onlyRole(OWNER_ROLE) {
+  function withdrawAll(uint256 _amount) external onlyRole(OWNER_ROLE) {
     require(_amount > 0, 'LiquidityPool: amount must be greater than 0');
     require(usdcToken.balanceOf(address(this)) >= _amount, 'LiquidityPool: Insufficient USDC balance');
 

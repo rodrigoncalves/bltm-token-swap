@@ -14,14 +14,14 @@ export const useRedeem = () => {
     args: [address, LIQUIDITY_POOL_ADDRESS]
   });
 
-  const { writeContractAsync: redeemBLTMForUSDC, isPending: isRedeeming } = useWriteContract();
+  const { writeContractAsync: redeem, isPending: isRedeeming } = useWriteContract();
   const { writeContractAsync: approve, isPending: isApproving } = useWriteContract();
 
   const onRedeem = (value: bigint) =>
-    redeemBLTMForUSDC({
+    redeem({
       abi: LiquidityPoolAbi,
       address: LIQUIDITY_POOL_ADDRESS,
-      functionName: 'redeemBLTMForUSDC',
+      functionName: 'redeem',
       args: [value]
     }, { onSuccess: () => refetchAllowance() });
 
