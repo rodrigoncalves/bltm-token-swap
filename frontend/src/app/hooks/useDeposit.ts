@@ -9,6 +9,7 @@ import { useTokenBalance } from './useTokenBalance';
 export const useDeposit = () => {
   const { address } = useAccount();
   const { refetchBalances } = useTokenBalance();
+
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     abi: USDCTokenAbi,
     address: USDC_ADDRESS,
@@ -20,6 +21,14 @@ export const useDeposit = () => {
   const { writeContractAsync: deposit, data: depositTxHash, isPending: isPendingDeposit } = useWriteContract();
   const { data: approvedReceipt, isSuccess: isApproved, isLoading: isApproving, error: isApprovingFailed } = useWaitForTransactionReceipt({ hash: approveTxHash })
   const { data: depositReceipt, isSuccess: isDeposited, isLoading: isDepositing } = useWaitForTransactionReceipt({ hash: depositTxHash })
+
+  useEffect(() => {
+    if (approvedReceipt && isApproved || depositReceipt && isDeposited) {
+      refetchAllowance();
+      refetchBalances?.();
+    }
+  }, [approvedReceipt, depositReceipt, isApproved, isDeposited, refetchAllowance, refetchBalances])
+
 
   const onDeposit = (value: bigint) =>
     deposit({
@@ -37,13 +46,6 @@ export const useDeposit = () => {
       args: [LIQUIDITY_POOL_ADDRESS, value]
     });
 
-  useEffect(() => {
-    if (approvedReceipt && isApproved || depositReceipt && isDeposited) {
-      console.log('Transaction was successful:', approvedReceipt, depositReceipt);
-      refetchAllowance();
-      refetchBalances?.();
-    }
-  }, [approvedReceipt, depositReceipt, isApproved, isDeposited, refetchAllowance, refetchBalances])
 
   return {
     allowance: allowance ? formatUnits(allowance as bigint, DECIMAL_PLACES) : 0n,
