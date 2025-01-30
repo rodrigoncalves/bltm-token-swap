@@ -71,6 +71,7 @@ npm run dev
 - Developed a **LiquidityPool contract** to facilitate token swaps and enforce exchange rates following the defined rules.
 - Created a **React + Next.js frontend** to interact with the smart contracts and display user balances and transactions.
 - Used **Wagmi & Viem** for efficient blockchain interaction and wallet connection.
+- Implemented IndexedDB for Transaction History Storage scalability, performance awareness, and offline storage capabilities, and also display them in real time.
 
 ### Challenges and how they were overcome
 - **Issue**: Not enough allowance to swap tokens  
