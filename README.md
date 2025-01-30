@@ -8,6 +8,7 @@ This dApp allows users to:
 ✅ Swap USDC for BLTM tokens  
 ✅ Redeem BLTM tokens back for USDC  
 ✅ Track deposit and withdrawal transactions in real time  
+✅ View transaction history with sorting and filtering options available for the user
 
 Users interact with a **LiquidityPool smart contract** that facilitates token swaps, enforces exchange rates, and maintains a balance of USDC and BLTM tokens.  
 
@@ -54,7 +55,7 @@ cd frontend
 npm run dev
 ```
 
-#### 6️. Connect MetaMask to the Localhost (Hardhat Network)
+#### 6️. (Optional) Connect MetaMask to the Localhost (Hardhat Network)
 1. Open **Metamask** in your browser
 1. Click **Networks → Add Network → Custom RPC**
 1. Enter the following details:
@@ -63,6 +64,19 @@ npm run dev
    - **Chain ID:** `31337`
 1. Click **Save**
 1. (Optional) Import **USDC and BLTM** manually using deployed addresses
+
+#### 7. **Connect MetaMask to Sepolia Network (Testnet)**
+1. Open **Metamask** in your browser
+1. Click **Networks → Add Network → Custom RPC**
+1. Enter the following details:
+   - **Network Name:** `Sepolia`
+   - **New RPC URL:** `https://sepolia.infura.io`
+   - **Chain ID:** `11155111`
+   - **Currency Symbol:** `SepoliaETH`
+1. Click **Save**
+1. Import **USDC and BLTM** manually using deployed addresses (see below)
+
+#### 7. Rename .env.example to .env and fill in the required fields
 
 ## Approach and Challenges
 
@@ -91,3 +105,8 @@ npm run dev
 - Improve UI with better styling and animations.
 - Add "owner only" features like change BLTM exchange rate and withdraw all remain USDCs from the pool.
 - Add unit tests on the frontend using Jest and React Testing Library.
+
+## Deployed Contracts Addresses (Sepolia Network)
+- **BLTM Token:** `0xb31bb1dfd4760689e99739b96d9a9e507ebe2c84`
+- **LiquidityPool:** `0x88911de1ad317d172797172e74578e2618515c09`
+- **USDC Token:** `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`
