@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
 
 type SortKey = 'date' | 'action' | 'amount' | 'user';
@@ -62,7 +62,7 @@ const TransactionHistory = () => {
       <div className="mb-2 flex justify-between items-center" style={{ color: 'black' }}>
         <input
           type="text"
-          placeholder="Search by user address..."
+          placeholder="Search"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           className="p-2 border rounded w-full"

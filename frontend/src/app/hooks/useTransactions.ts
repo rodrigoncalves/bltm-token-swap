@@ -3,34 +3,43 @@ import { DECIMAL_PLACES, LIQUIDITY_POOL_ADDRESS } from "@/constants";
 import { useEffect, useRef, useState } from "react";
 import { formatUnits, parseAbiItem } from "viem";
 import { usePublicClient, useWatchContractEvent } from "wagmi";
-
-interface Transaction {
-  txHash: string;
-  date: string;
-  action: string;
-  amount: string;
-  user: string;
-}
+import { useIndexedDBTransactions } from "./useIndexedDBTransactions";
+import { Transaction } from "../storage/transactionDB";
 
 interface TokenSwapEvent {
   transactionHash: string;
   args: {
     user: string;
     owner: string;
-    usdcAmount: bigint,
-    bltmAmount: bigint
-  }
+    usdcAmount: bigint;
+    bltmAmount: bigint;
+  };
 }
 
 export function useTransactions() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const publicClient = usePublicClient();
+  const { getAllTransactions, addTransaction, getTransactionByHash } = useIndexedDBTransactions();
+  const [transactionState, setTransactionState] = useState<Transaction[]>([]);
   const [latestBlock, setLatestBlock] = useState<bigint>(0n);
+  const publicClient = usePublicClient();
   const processedLogs = useRef(new Set());
 
-  const tokensSwappedEventAbi = parseAbiItem('event TokensSwapped(address indexed user, uint256 usdcAmount, uint256 bltmAmount)');
-  const tokensRedeemedEventAbi = parseAbiItem('event TokensRedeemed(address indexed user, uint256 bltmAmount, uint256 usdcAmount)');
+  const tokensSwappedEventAbi = parseAbiItem(
+    "event TokensSwapped(address indexed user, uint256 usdcAmount, uint256 bltmAmount)"
+  );
+  const tokensRedeemedEventAbi = parseAbiItem(
+    "event TokensRedeemed(address indexed user, uint256 bltmAmount, uint256 usdcAmount)"
+  );
 
+  // ✅ Load Cached Transactions First
+  useEffect(() => {
+    const loadCachedTransactions = async () => {
+      const cachedTxs = await getAllTransactions();
+      setTransactionState(cachedTxs); // ✅ Show cached data instantly
+    };
+    loadCachedTransactions();
+  }, []);
+
+  // ✅ Always Fetch Transactions from Blockchain (To Update IndexedDB)
   const fetchTransactions = async () => {
     if (!publicClient) return;
 
@@ -47,22 +56,23 @@ export function useTransactions() {
           event: tokensRedeemedEventAbi,
           fromBlock: 0n,
           toBlock: "latest",
-        })
+        }),
       ]);
 
-      const formatEvent = async (event: any, action: string) => {
-        const args = event.args as TokenSwapEvent['args'];
+      const formatEvent = async (event: any, action: string): Promise<Transaction> => {
+        const args = event.args as TokenSwapEvent["args"];
         const amount = action === "Deposit" ? args.usdcAmount : args.bltmAmount;
         const block = await publicClient.getBlock(event.blockNumber);
+
         return {
           txHash: event.transactionHash,
           timestamp: block.timestamp,
           date: new Date(Number(block.timestamp) * 1000).toLocaleString(),
           action,
           amount: formatUnits(amount, DECIMAL_PLACES),
-          user: args.user
-        }
-      }
+          user: args.user,
+        };
+      };
 
       const [formattedPastDeposits, formattedPastRedeems] = await Promise.all([
         Promise.all(pastDeposits.map(async (event) => await formatEvent(event, "Deposit"))),
@@ -70,17 +80,30 @@ export function useTransactions() {
       ]);
 
       const newTransactions = [...formattedPastDeposits, ...formattedPastRedeems];
-      setTransactions(newTransactions);
 
-      newTransactions.forEach(t => processedLogs.current.add(t.txHash))
+      // ✅ Store only new transactions in IndexedDB
+      let addedTransactions = false;
+      for (const tx of newTransactions) {
+        const existingTx = await getTransactionByHash(tx.txHash);
+        if (!existingTx) {
+          await addTransaction(tx);
+          addedTransactions = true;
+        }
+      }
+
+      // ✅ If new transactions were added, refresh state
+      if (addedTransactions) {
+        const updatedTxs = await getAllTransactions();
+        setTransactionState(updatedTxs);
+      }
     } catch (err) {
       console.error(err);
     }
   };
 
+  // ✅ Fetch Latest Block Number
   const fetchLatestBlock = async () => {
     if (!publicClient) return;
-
     try {
       const block = await publicClient.getBlockNumber();
       setLatestBlock(block);
@@ -89,67 +112,58 @@ export function useTransactions() {
     }
   };
 
+  // ✅ Always Fetch Transactions on Load (Background Update)
   useEffect(() => {
-    fetchTransactions();
+    fetchTransactions(); // ✅ Fetch new transactions in the background
     fetchLatestBlock();
   }, [publicClient]);
 
+  // ✅ Watch Real-Time Transactions & Store in IndexedDB
+  const processRealTimeEvent = async (event: TokenSwapEvent, action: "Deposit" | "Withdraw") => {
+    const txHash = event.transactionHash;
+    if (!processedLogs.current.has(txHash)) {
+      processedLogs.current.add(txHash);
+      const newTransaction = {
+        txHash,
+        timestamp: BigInt(new Date().getTime()),
+        date: new Date().toLocaleString(),
+        action,
+        amount: formatUnits(event.args.usdcAmount, DECIMAL_PLACES),
+        user: event.args.owner,
+      };
 
-  // Subscribe to real-time TokensSwapped event
+      const existingTx = await getTransactionByHash(txHash);
+      if (!existingTx) {
+        await addTransaction(newTransaction);
+      }
+    }
+  };
+
   useWatchContractEvent({
     address: LIQUIDITY_POOL_ADDRESS,
     abi: LiquidityPoolAbi,
-    eventName: 'TokensSwapped',
+    eventName: "TokensSwapped",
     fromBlock: latestBlock,
     onLogs(logs) {
       logs.forEach((log) => {
-        const event = (log as never as TokenSwapEvent);
-        const txHash = event.transactionHash;
-        if (!processedLogs.current.has(txHash)) {
-          processedLogs.current.add(txHash);
-          setTransactions((prev) => [
-            ...prev,
-            {
-              txHash,
-              timestamp: new Date().getTime(),
-              date: new Date().toLocaleString(),
-              action: 'Deposit',
-              amount: formatUnits(event.args.usdcAmount, DECIMAL_PLACES),
-              user: event.args.owner,
-            },
-          ]);
-        }
+        const event = log as never as TokenSwapEvent;
+        processRealTimeEvent(event, "Deposit");
       });
     },
   });
 
-  // Subscribe to real-time TokensRedeemed event
   useWatchContractEvent({
     address: LIQUIDITY_POOL_ADDRESS,
     abi: LiquidityPoolAbi,
-    eventName: 'TokensRedeemed',
+    eventName: "TokensRedeemed",
     fromBlock: latestBlock,
     onLogs(logs) {
       logs.forEach((log) => {
-        const event = (log as never as TokenSwapEvent);
-        const txHash = event.transactionHash;
-        if (!processedLogs.current.has(txHash)) {
-          processedLogs.current.add(txHash);
-          setTransactions((prev) => [
-            ...prev,
-            {
-              txHash,
-              timestamp: new Date().getTime(),
-              date: new Date().toLocaleString(),
-              action: 'Withdraw',
-              amount: formatUnits(event.args.usdcAmount, DECIMAL_PLACES),
-              user: event.args.owner,
-            },
-          ]);
-        }
+        const event = log as never as TokenSwapEvent;
+        processRealTimeEvent(event, "Withdraw");
       });
     },
   });
 
-  return transactions;
+  return transactionState;
 }
