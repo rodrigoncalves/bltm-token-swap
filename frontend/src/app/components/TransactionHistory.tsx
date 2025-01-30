@@ -8,6 +8,8 @@ const TransactionHistory = () => {
   const transactions = useTransactions();
   const [sortField, setSortField] = useState<SortKey>('date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   // Handle sorting when clicking headers
   const handleSort = (field: SortKey) => {
@@ -20,7 +22,6 @@ const TransactionHistory = () => {
     let valA: any = a[sortField];
     let valB: any = b[sortField];
 
-    // Convert to numbers if sorting by amount
     if (sortField === 'amount') {
       valA = parseFloat(valA);
       valB = parseFloat(valB);
@@ -31,9 +32,15 @@ const TransactionHistory = () => {
     return 0;
   });
 
+  // Pagination calculations
+  const totalPages = Math.ceil(sortedTransactions.length / rowsPerPage);
+  const paginatedTransactions = sortedTransactions.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+
   return (
     <div className="mt-6">
       <h3 className="text-lg font-bold mb-2">Transaction History</h3>
+
+      {/* Transaction Table */}
       <table className="table-auto w-full border-collapse border border-gray-800">
         <thead>
           <tr className="bg-gray-700 text-white">
@@ -52,7 +59,7 @@ const TransactionHistory = () => {
           </tr>
         </thead>
         <tbody>
-          {sortedTransactions.map((tx, index) => (
+          {paginatedTransactions.map((tx, index) => (
             <tr key={index} className="border border-gray-800 text-center">
               <td className="px-4 py-2">{new Date(tx.date).toLocaleString()}</td>
               <td className="px-4 py-2">{tx.action}</td>
@@ -64,6 +71,42 @@ const TransactionHistory = () => {
           ))}
         </tbody>
       </table>
+      {/* Rows Per Page Selector */}
+      <div className="mt-2 flex justify-between" style={{ color: 'black' }}>
+        <span>Show</span>
+        <select
+          value={rowsPerPage}
+          onChange={e => {
+            setRowsPerPage(Number(e.target.value));
+            setCurrentPage(1);
+          }}
+          className="p-2 border rounded"
+        >
+          <option value="5">5 rows</option>
+          <option value="10">10 rows</option>
+          <option value="20">20 rows</option>
+        </select>
+      </div>
+      {/* Pagination Controls */}
+      <div className="flex justify-between items-center mt-4">
+        <button
+          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="p-2 bg-gray-700 text-white rounded disabled:opacity-50"
+        >
+          Previous
+        </button>
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+          className="p-2 bg-gray-700 text-white rounded disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };
