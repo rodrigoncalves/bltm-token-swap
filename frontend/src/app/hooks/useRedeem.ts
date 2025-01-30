@@ -1,6 +1,6 @@
 import { BLTMTokenAbi } from '@/abis/BLTMTokenAbi';
 import { LiquidityPoolAbi } from '@/abis/LiquidityPoolAbi';
-import { BLTM_ADDRESS, LIQUIDITY_POOL_ADDRESS } from '@/constants';
+import { BLTM_ADDRESS, DECIMAL_PLACES, LIQUIDITY_POOL_ADDRESS } from '@/constants';
 import { formatUnits } from 'viem';
 import { useAccount, useReadContract, useWriteContract } from 'wagmi';
 
@@ -14,14 +14,14 @@ export const useRedeem = () => {
     args: [address, LIQUIDITY_POOL_ADDRESS]
   });
 
-  const { writeContractAsync: redeemBLTMForUSDC, isPending: isRedeeming } = useWriteContract();
+  const { writeContractAsync: redeem, isPending: isRedeeming } = useWriteContract();
   const { writeContractAsync: approve, isPending: isApproving } = useWriteContract();
 
   const onRedeem = (value: bigint) =>
-    redeemBLTMForUSDC({
+    redeem({
       abi: LiquidityPoolAbi,
       address: LIQUIDITY_POOL_ADDRESS,
-      functionName: 'redeemBLTMForUSDC',
+      functionName: 'redeem',
       args: [value]
     }, { onSuccess: () => refetchAllowance() });
 
@@ -34,7 +34,7 @@ export const useRedeem = () => {
     }, { onSuccess: () => refetchAllowance() });
 
   return {
-    allowance: allowance ? formatUnits(allowance as bigint, 6) : 0n,
+    allowance: allowance ? formatUnits(allowance as bigint, DECIMAL_PLACES) : 0n,
     isApproving,
     isRedeeming,
     onApproveRedeem,

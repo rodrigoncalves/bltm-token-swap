@@ -332,7 +332,7 @@ export const LiquidityPoolAbi = [
         "type": "uint256"
       }
     ],
-    "name": "redeemBLTMForUSDC",
+    "name": "redeem",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -413,7 +413,7 @@ export const LiquidityPoolAbi = [
         "type": "uint256"
       }
     ],
-    "name": "swapUSDCForBLTM",
+    "name": "deposit",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -439,7 +439,7 @@ export const LiquidityPoolAbi = [
         "type": "uint256"
       }
     ],
-    "name": "withdrawUSDC",
+    "name": "withdrawAll",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

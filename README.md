@@ -73,7 +73,7 @@ npm run dev
 - Used **Wagmi & Viem** for efficient blockchain interaction and wallet connection.
 
 ### Challenges and how they were overcome
-- **Issue**: Not enough allowance to swap USDC for BLTM and vice versa  
+- **Issue**: Not enough allowance to swap tokens  
 ✅ **Fix**: Called `approve()` function to allow the LiquidityPool contract to transfer USDC and burn BLTM on behalf of the user.
 - **Issue:** Incorrect `burn()` function call in BLTM contract  
 ✅ **Fix:** Fixed the function signature to `burnForm()` and tested the contract using Hardhat tests.
@@ -81,9 +81,12 @@ npm run dev
 ✅ Fix: Ensured users had enough BLTM before attempting to burn tokens.
 - **Issue:**: Hardhat local node resets after restarting  
 ✅ Fix: Used local snapshots or manually re-minted tokens for testing.
+- **Issue:**: Internal JSON-RPC errors when interacting with the smart contracts after restarting local node and redeploying contracts  
+✅ Fix: Clean Metamask cache and restart the browser.
 
 ### 🔮 Suggested Improvements
 - Persist transactions in local storage or a database (e.g., Firebase, PostgreSQL).
 - Expand to multiple chains (Polygon, Arbitrum) using Wagmi’s or Wallet Connect multi-chain support.
 - Improve UI with better styling and animations.
 - Add "owner only" features like change BLTM exchange rate and withdraw all remain USDCs from the pool.
+- Add unit tests on the frontend using Jest and React Testing Library.
