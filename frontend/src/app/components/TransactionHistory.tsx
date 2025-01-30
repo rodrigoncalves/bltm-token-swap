@@ -10,6 +10,7 @@ const TransactionHistory = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Handle sorting when clicking headers
   const handleSort = (field: SortKey) => {
@@ -32,13 +33,29 @@ const TransactionHistory = () => {
     return 0;
   });
 
+  // Filter transactions based on search query
+  const filteredTransactions = sortedTransactions.filter(tx =>
+    Object.values(tx).some(val => val.toString().toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
   // Pagination calculations
-  const totalPages = Math.ceil(sortedTransactions.length / rowsPerPage);
-  const paginatedTransactions = sortedTransactions.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+  const totalPages = Math.ceil(filteredTransactions.length / rowsPerPage);
+  const paginatedTransactions = filteredTransactions.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
   return (
     <div className="mt-6">
       <h3 className="text-lg font-bold mb-2">Transaction History</h3>
+
+      {/* Search Bar */}
+      <div className="mb-2 flex justify-between items-center" style={{ color: 'black' }}>
+        <input
+          type="text"
+          placeholder="Search by user address..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          className="p-2 border rounded w-full"
+        />
+      </div>
 
       {/* Transaction Table */}
       <table className="table-auto w-full border-collapse border border-gray-800">
@@ -71,9 +88,10 @@ const TransactionHistory = () => {
           ))}
         </tbody>
       </table>
+
       {/* Rows Per Page Selector */}
-      <div className="mt-2 flex justify-between" style={{ color: 'black' }}>
-        <span>Show</span>
+      <div className="mt-2 flex justify-end items-center gap-4" style={{ color: 'black' }}>
+        <span style={{ color: 'white' }}>Show</span>
         <select
           value={rowsPerPage}
           onChange={e => {
@@ -87,6 +105,7 @@ const TransactionHistory = () => {
           <option value="20">20 rows</option>
         </select>
       </div>
+
       {/* Pagination Controls */}
       <div className="flex justify-between items-center mt-4">
         <button
@@ -97,7 +116,7 @@ const TransactionHistory = () => {
           Previous
         </button>
         <span>
-          Page {currentPage} of {totalPages}
+          Page {currentPage > totalPages ? totalPages : currentPage} of {totalPages}
         </span>
         <button
           onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
