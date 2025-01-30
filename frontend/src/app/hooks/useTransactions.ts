@@ -1,5 +1,5 @@
 import { LiquidityPoolAbi } from "@/abis/LiquidityPoolAbi";
-import { DECIMAL_PLACES, LIQUIDITY_POOL_ADDRESS } from "@/constants";
+import { DECIMAL_PLACES, FROM_BLOCK, LIQUIDITY_POOL_ADDRESS } from "@/constants";
 import { useEffect, useRef, useState } from "react";
 import { formatUnits, parseAbiItem } from "viem";
 import { usePublicClient, useWatchContractEvent } from "wagmi";
@@ -44,20 +44,51 @@ export function useTransactions() {
     if (!publicClient) return;
 
     try {
-      const [pastDeposits, pastRedeems] = await Promise.all([
-        publicClient.getLogs({
-          address: LIQUIDITY_POOL_ADDRESS,
-          event: tokensSwappedEventAbi,
-          fromBlock: 0n,
-          toBlock: "latest",
-        }),
-        publicClient.getLogs({
-          address: LIQUIDITY_POOL_ADDRESS,
-          event: tokensRedeemedEventAbi,
-          fromBlock: 0n,
-          toBlock: "latest",
-        }),
-      ]);
+      const latestBlock = await publicClient.getBlockNumber();
+      const batchSize = 10_000n; // because Sepolia freetier 
+      let fromBlock = FROM_BLOCK;
+
+      let pastDeposits: any[] = [];
+      let pastRedeems: any[] = [];
+      while (fromBlock < latestBlock) {
+        const toBlock = fromBlock + batchSize > latestBlock ? latestBlock : fromBlock + batchSize;
+        console.log(`Fetching logs from block ${fromBlock} to ${toBlock}...`);
+
+        const [batchDeposits, batchRedeems] = await Promise.all([
+          publicClient.getLogs({
+            address: LIQUIDITY_POOL_ADDRESS,
+            event: tokensSwappedEventAbi,
+            fromBlock: fromBlock,
+            toBlock: toBlock,
+          }),
+          publicClient.getLogs({
+            address: LIQUIDITY_POOL_ADDRESS,
+            event: tokensRedeemedEventAbi,
+            fromBlock: fromBlock,
+            toBlock: toBlock,
+          }),
+        ]);
+
+        pastDeposits = [...pastDeposits, ...batchDeposits];
+        pastRedeems = [...pastRedeems, ...batchRedeems];
+
+        fromBlock = toBlock + 1n; // Move to next batch
+      }
+
+      // const [pastDeposits, pastRedeems] = await Promise.all([
+      //   publicClient.getLogs({
+      //     address: LIQUIDITY_POOL_ADDRESS,
+      //     event: tokensSwappedEventAbi,
+      //     fromBlock: FROM_BLOCK,
+      //     toBlock: "latest",
+      //   }),
+      //   publicClient.getLogs({
+      //     address: LIQUIDITY_POOL_ADDRESS,
+      //     event: tokensRedeemedEventAbi,
+      //     fromBlock: FROM_BLOCK,
+      //     toBlock: "latest",
+      //   }),
+      // ]);
 
       const formatEvent = async (event: any, action: string): Promise<Transaction> => {
         const args = event.args as TokenSwapEvent["args"];
@@ -135,6 +166,7 @@ export function useTransactions() {
       const existingTx = await getTransactionByHash(txHash);
       if (!existingTx) {
         await addTransaction(newTransaction);
+        setTransactionState([...transactionState, newTransaction]);
       }
     }
   };
