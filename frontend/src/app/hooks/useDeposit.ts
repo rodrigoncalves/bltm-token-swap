@@ -16,8 +16,8 @@ export const useDeposit = () => {
     args: [address, LIQUIDITY_POOL_ADDRESS]
   });
 
-  const { writeContractAsync: approve, data: approveTxHash } = useWriteContract();
-  const { writeContractAsync: deposit, data: depositTxHash } = useWriteContract();
+  const { writeContractAsync: approve, data: approveTxHash, isPending: isPendingApproval } = useWriteContract();
+  const { writeContractAsync: deposit, data: depositTxHash, isPending: isPendingDeposit } = useWriteContract();
   const { data: approvedReceipt, isSuccess: isApproved, isLoading: isApproving, error: isApprovingFailed } = useWaitForTransactionReceipt({ hash: approveTxHash })
   const { data: depositReceipt, isSuccess: isDeposited, isLoading: isDepositing } = useWaitForTransactionReceipt({ hash: depositTxHash })
 
@@ -47,8 +47,8 @@ export const useDeposit = () => {
 
   return {
     allowance: allowance ? formatUnits(allowance as bigint, DECIMAL_PLACES) : 0n,
-    isApproving,
-    isDepositing,
+    isApproving: isPendingApproval || isApproving,
+    isDepositing: isPendingDeposit || isDepositing,
     isApprovingFailed: isApprovingFailed || false,
     onApproveDeposit,
     onDeposit,
