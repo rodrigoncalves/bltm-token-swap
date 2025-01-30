@@ -89,3 +89,4 @@ npm run dev
 - Expand to multiple chains (Polygon, Arbitrum) using Wagmi’s or Wallet Connect multi-chain support.
 - Improve UI with better styling and animations.
 - Add "owner only" features like change BLTM exchange rate and withdraw all remain USDCs from the pool.
+- Add unit tests on the frontend using Jest and React Testing Library.
