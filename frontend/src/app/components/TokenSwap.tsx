@@ -32,7 +32,6 @@ export default function TokenSwap() {
       if (hasDepositAllowance) {
         await onDeposit(value);
         setAmount('');
-        refetchBalances?.();
       } else {
         await onApproveDeposit(value);
       }
