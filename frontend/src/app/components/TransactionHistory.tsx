@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
 
 type SortKey = 'date' | 'action' | 'amount' | 'user';
@@ -11,6 +11,7 @@ const TransactionHistory = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   // Handle sorting when clicking headers
   const handleSort = (field: SortKey) => {
@@ -33,14 +34,25 @@ const TransactionHistory = () => {
     return 0;
   });
 
-  // Filter transactions based on search query
+  // Filter transactions across all fields using debounced search value
   const filteredTransactions = sortedTransactions.filter(tx =>
-    Object.values(tx).some(val => val.toString().toLowerCase().includes(searchQuery.toLowerCase()))
+    Object.values(tx).some(val => val.toString().toLowerCase().includes(debouncedSearch.toLowerCase()))
   );
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredTransactions.length / rowsPerPage);
   const paginatedTransactions = filteredTransactions.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+
+  // Debounce effect: Waits 300ms before setting the search query
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
 
   return (
     <div className="mt-6">
