@@ -1,6 +1,9 @@
 # Rodrigo Santana Gonçalves Basic dApp for RWA Invesing
 A decentralized application to swap USDC for BLTM tokens representing ownership in Real-World Assets (RWA).
 
+## Deployment
+The application is deployed on Vercel and can be accessed at the following URL: https://bltm-token-swap.vercel.app/
+
 ## Description
 This dApp allows users to:  
 ✅ Connect their MetaMask wallet  
